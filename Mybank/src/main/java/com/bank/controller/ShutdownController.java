@@ -14,8 +14,18 @@ public class ShutdownController implements ApplicationContextAware {
     private ApplicationContext context;
     
     @GetMapping("/shutdownContext")
-    public void shutdownContext() {
-        ((ConfigurableApplicationContext) context).close();
+    public String shutdownContext() {
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(1000); // Wait to let HTTP response complete
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            ((ConfigurableApplicationContext) context).close(); // Gracefully shutdown
+        });
+        thread.setDaemon(false); // JVM waits for this thread to finish
+        thread.start();
+        return "Shutting down application context...";
     }
 
     @Override
@@ -23,4 +33,6 @@ public class ShutdownController implements ApplicationContextAware {
         this.context = ctx;
         
     }
+    
+    
 }
